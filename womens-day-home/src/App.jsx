@@ -36,17 +36,17 @@ function App() {
       <nav className="buttons-container">
         {/* Relative Links depending on how projects are deployed together */}
         {/* Garden */}
-        <a href="http://localhost:5176" className="flower-button floating">
+        <a href="/Magical_Swaying_Garden-main/index.html" className="flower-button floating">
           <span className="text">Garden</span>
         </a>
 
         {/* Box */}
-        <a href="http://localhost:5174" className="flower-button floating">
+        <a href="/womens-day-neon-box/index.html" className="flower-button floating">
           <span className="text">Box</span>
         </a>
 
         {/* Quiz */}
-        <a href="http://localhost:5175" className="flower-button floating">
+        <a href="/womens-day-neon-quiz/index.html" className="flower-button floating">
           <span className="text">Quiz</span>
         </a>
       </nav>

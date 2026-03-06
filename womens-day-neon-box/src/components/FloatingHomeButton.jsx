@@ -3,7 +3,7 @@ import React from 'react';
 export default function FloatingHomeButton() {
     return (
         <a
-            href="http://localhost:5173"
+            href="/"
             style={{
                 position: 'fixed',
                 bottom: '20px',
