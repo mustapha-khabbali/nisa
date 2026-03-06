@@ -1,0 +1,50 @@
+/* Scoped animations and layout for App.jsx */
+.app-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.background-blur-decor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+}
+
+.bg-decor-1 {
+  top: 10%;
+  left: 10%;
+  width: 40vw;
+  height: 40vw;
+  max-width: 400px;
+  max-height: 400px;
+  background: radial-gradient(circle, rgba(255, 20, 147, 0.25) 0%, transparent 70%);
+  filter: blur(60px);
+}
+
+.bg-decor-2 {
+  bottom: 5%;
+  right: 5%;
+  width: 50vw;
+  height: 50vw;
+  max-width: 500px;
+  max-height: 500px;
+  background: radial-gradient(circle, rgba(174, 34, 255, 0.25) 0%, transparent 70%);
+  filter: blur(80px);
+}
+
+.content-layer {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}

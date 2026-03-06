@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magical Swaying Garden</title>
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #080008;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(8, 0, 8, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            cursor: pointer;
+            transition: opacity 1s ease;
+        }
+
+        #overlay p {
+            color: #ff1493;
+            font-family: 'Great Vibes', cursive;
+            font-size: clamp(24px, 5vw, 32px);
+            text-shadow: 0 0 10px #ff1493;
+            padding: 20px;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        #neon-container {
+            position: absolute;
+            left: 5%;
+            top: 30%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 3s ease-in-out;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            width: 90%;
+        }
+
+        .neon-text {
+            color: #fff;
+            font-family: 'Great Vibes', cursive;
+            text-shadow:
+                0 0 7px #fff,
+                0 0 10px #fff,
+                0 0 21px #fff,
+                0 0 42px #ff1493,
+                0 0 82px #ff1493,
+                0 0 92px #ff1493;
+            animation: flicker 2s infinite alternate;
+            line-height: 1.1;
+        }
+
+        .name {
+            font-size: clamp(60px, 15vw, 126px);
+        }
+
+        .desc {
+            font-size: clamp(24px, 6vw, 42px);
+        }
+
+        @keyframes flicker {
+
+            0%,
+            18%,
+            22%,
+            25%,
+            53%,
+            57%,
+            100% {
+                text-shadow: 0 0 7px #fff, 0 0 10px #fff, 0 0 21px #fff, 0 0 42px #ff1493, 0 0 82px #ff1493, 0 0 92px #ff1493;
+            }
+
+            20%,
+            24%,
+            55% {
+                text-shadow: none;
+                color: rgba(255, 20, 147, 0.5);
+            }
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 768px) {
+            #neon-container {
+                left: 0;
+                top: 20%;
+                align-items: center;
+                text-align: center;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="overlay" onclick="startExperience()">
+        <p>Cliquez Hna...</p>
+    </div>
+
+    <!-- Floating Home Button -->
+    <a href="http://localhost:5173" class="floating-home-btn">Home</a>
+    <style>
+        .floating-home-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #ff1493;
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(255, 20, 147, 0.4);
+            z-index: 9999;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.3s;
+        }
+
+        .floating-home-btn:hover {
+            transform: scale(1.1) rotate(15deg);
+            background-color: #ff69b4;
+        }
+    </style>
+
+    <audio id="bgMusic" loop preload="auto">
+        <source src="dis.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="neon-container">
+        <div class="neon-text name">T'es</div>
+        <div class="neon-text desc">la plus belle des femmes</div>
+    </div>
+
+    <canvas id="gardenCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gardenCanvas');
+        const ctx = canvas.getContext('2d');
+        const audio = document.getElementById('bgMusic');
+        const neonContainer = document.getElementById('neon-container');
+        const overlay = document.getElementById('overlay');
+
+        let width, height, time = 0, progress = 0, active = false;
+        const growthSpeed = 0.0025;
+        const sparkles = [], herbBlades = [], butterflies = [];
+
+        // Stems with relative multipliers to keep them centered and sized for different screens
+        const flowerStems = [
+            { xMult: -0.15, hMult: 0.5, delay: 0.1, angle: -0.1, leafData: [] },
+            { xMult: 0.02, hMult: 0.65, delay: 0, angle: 0.03, leafData: [] },
+            { xMult: 0.18, hMult: 0.45, delay: 0.2, angle: 0.12, leafData: [] }
+        ];
+
+        function startExperience() {
+            active = true;
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 1000);
+            audio.play().catch(e => console.log("Audio failed:", e));
+            init();
+            requestAnimationFrame(animate);
+        }
+
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+
+            sparkles.length = 0;
+            const sparkleCount = width < 600 ? 20 : 40;
+            for (let i = 0; i < sparkleCount; i++) {
+                sparkles.push({
+                    x: Math.random() * width, y: Math.random() * height,
+                    size: Math.random() * 1.5 + 0.5,
+                    vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+
+            herbBlades.length = 0;
+            const herbCount = width < 600 ? 15 : 35;
+            for (let i = 0; i < herbCount; i++) {
+                herbBlades.push({
+                    x: Math.random() * width, h: (height * 0.3) + Math.random() * (height * 0.4),
+                    tilt: (Math.random() - 0.5) * 120, curve: (Math.random() - 0.5) * 100,
+                    thickness: 6 + Math.random() * 8, opacity: 0.4 + Math.random() * 0.4,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+
+            flowerStems.forEach(s => {
+                s.leafData = [];
+                const count = 4 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < count; i++) {
+                    s.leafData.push({
+                        ratio: 0.2 + (i / count) * 0.6, side: Math.random() > 0.5 ? 1 : -1,
+                        scale: 0.6 + Math.random() * 0.5, rotOff: (Math.random() - 0.5) * 0.4,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+            });
+
+            butterflies.length = 0;
+            for (let i = 0; i < 2; i++) {
+                butterflies.push({
+                    x: Math.random() * width, y: Math.random() * height,
+                    angle: Math.random() * Math.PI * 2,
+                    speed: 1.5 + Math.random(),
+                    flapPhase: Math.random() * Math.PI,
+                    size: width < 600 ? 10 : 18
+                });
+            }
+        }
+
+        function drawButterfly(b, t) {
+            b.angle += Math.sin(t * 0.001 + b.flapPhase) * 0.05;
+            b.x += Math.cos(b.angle) * b.speed;
+            b.y += Math.sin(b.angle) * b.speed;
+            if (b.x < -50) b.x = width + 50; if (b.x > width + 50) b.x = -50;
+            if (b.y < -50) b.y = height + 50; if (b.y > height + 50) b.y = -50;
+
+            const flap = Math.sin(t * 0.01 + b.flapPhase);
+            ctx.save();
+            ctx.translate(b.x, b.y);
+            ctx.rotate(b.angle + Math.PI / 2);
+            ctx.fillStyle = '#ff69b4';
+            ctx.shadowColor = '#ff1493';
+            ctx.shadowBlur = 10;
+            for (let side of [-1, 1]) {
+                ctx.save();
+                ctx.scale(side * Math.abs(flap), 1);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(b.size, -b.size, b.size * 1.5, 0, 0, b.size * 0.2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(b.size * 0.8, b.size, b.size, b.size * 0.5, 0, b.size * 0.2);
+                ctx.fill();
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+
+        function drawHerb(p, t) {
+            herbBlades.forEach(g => {
+                const drawH = g.h * Math.min(1, p * 1.5);
+                const sway = Math.sin(t * 0.001 + g.phase) * (width * 0.03) * p;
+                const grad = ctx.createLinearGradient(g.x, height, g.x + g.tilt + sway, height - drawH);
+                grad.addColorStop(0, '#080008');
+                grad.addColorStop(0.4, '#250025');
+                grad.addColorStop(1, '#ff1493');
+                ctx.beginPath();
+                ctx.moveTo(g.x, height);
+                ctx.quadraticCurveTo(g.x + g.curve + sway * 0.5, height - drawH * 0.6, g.x + g.tilt + sway, height - drawH);
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = g.thickness * (1 - (drawH / g.h) * 0.9);
+                ctx.globalAlpha = g.opacity;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            });
+        }
+
+        function drawLeaf(x, y, scale, rotation, side, localP, t, phase) {
+            if (localP < 0.1) return;
+            const flutter = Math.sin(t * 0.002 + phase) * 0.1;
+            const size = (width < 600 ? 30 : 50) * scale * localP;
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation + flutter);
+            ctx.scale(side, 1);
+            const grad = ctx.createLinearGradient(0, 0, size, 0);
+            grad.addColorStop(0, '#1a001a'); grad.addColorStop(0.7, '#8b008b'); grad.addColorStop(1, '#ffc0cb');
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(size * 0.4, -size * 0.5, size * 0.9, -size * 0.3, size, 0);
+            ctx.bezierCurveTo(size * 0.9, size * 0.3, size * 0.4, size * 0.5, 0, 0);
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawFlowerHead(x, y, p, t) {
+            const bloomP = Math.max(0, (p - 0.8) * 5);
+            if (bloomP <= 0) return;
+            const scaleFactor = width < 600 ? 0.6 : 1;
+            const finalP = bloomP * (Math.sin(t * 0.0015) * 0.05 + 1) * scaleFactor;
+            ctx.save();
+            ctx.translate(x, y);
+            for (let i = 0; i < 3; i++) {
+                ctx.save();
+                ctx.rotate((i * Math.PI * 0.4) + Math.PI * 1.1);
+                ctx.beginPath();
+                ctx.ellipse(0, - (25 * finalP) / 2, 15 * finalP, 25 * finalP, 0, 0, Math.PI * 2);
+                ctx.fillStyle = '#4a004a';
+                ctx.fill();
+                ctx.restore();
+            }
+            const glow = ctx.createRadialGradient(0, -8 * finalP, 0, 0, -8 * finalP, 20 * finalP);
+            glow.addColorStop(0, '#fff'); glow.addColorStop(0.4, '#ffd700'); glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.ellipse(0, -8 * finalP, 18 * finalP, 9 * finalP, 0, 0, Math.PI * 2);
+            ctx.fill();
+            for (let i = 0; i < 2; i++) {
+                ctx.save();
+                ctx.rotate((i * Math.PI * 0.6) + Math.PI * 0.2);
+                const h = 35 * finalP;
+                const grad = ctx.createRadialGradient(0, 0, 0, 0, -h, h * 1.5);
+                grad.addColorStop(0, '#fff0f5'); grad.addColorStop(0.5, '#ff1493'); grad.addColorStop(1, '#300030');
+                ctx.beginPath();
+                ctx.ellipse(0, -h * 0.3, 22 * finalP, h, 0, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.shadowColor = '#ff69b4';
+                ctx.shadowBlur = 15 * finalP;
+                ctx.fill();
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+
+        function drawStems(p, t) {
+            flowerStems.forEach(s => {
+                const localP = Math.max(0, Math.min(1, (p - s.delay) / (1 - s.delay)));
+                const startX = width / 2 + (s.xMult * width);
+                const stemHeight = height * s.hMult;
+                const currentH = stemHeight * localP;
+                const wind = Math.sin(t * 0.0008 + (s.xMult * width)) * (width * 0.05) * localP;
+                const endX = startX + (s.angle * currentH) + wind;
+                const endY = height - currentH;
+                ctx.beginPath();
+                ctx.moveTo(startX, height);
+                ctx.quadraticCurveTo(startX + wind * 0.5, height - currentH * 0.5, endX, endY);
+                ctx.strokeStyle = '#200020';
+                ctx.lineWidth = 6 * (1 - localP * 0.4);
+                ctx.stroke();
+                s.leafData.forEach(ld => {
+                    const leafY = height - (currentH * ld.ratio);
+                    if (leafY > endY + 20) {
+                        const leafX = startX + (s.angle * (height - leafY)) + (wind * ld.ratio);
+                        drawLeaf(leafX, leafY, ld.scale, s.angle + ld.rotOff, ld.side, localP * 2, t, ld.phase);
+                    }
+                });
+                drawFlowerHead(endX, endY, localP, t);
+            });
+        }
+
+        function animate(timestamp) {
+            if (!active) return;
+            time = timestamp;
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = '#080008';
+            ctx.fillRect(0, 0, width, height);
+
+            if (progress < 1) {
+                progress += growthSpeed;
+            } else {
+                if (neonContainer.style.opacity !== "1") neonContainer.style.opacity = "1";
+                butterflies.forEach(b => drawButterfly(b, time));
+            }
+
+            drawHerb(progress, time);
+            drawStems(progress, time);
+            sparkles.forEach(f => {
+                f.x += f.vx; f.y += f.vy;
+                const op = (Math.sin(time * 0.002 + f.phase) + 1) / 2;
+                ctx.fillStyle = `rgba(255, 182, 193, ${op * 0.8})`;
+                ctx.beginPath();
+                ctx.arc(f.x + Math.sin(time * 0.001 + f.phase) * 20, f.y, f.size, 0, Math.PI * 2);
+                ctx.fill();
+                if (f.x < 0) f.x = width; if (f.x > width) f.x = 0;
+                if (f.y < 0) f.y = height; if (f.y > height) f.y = 0;
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => {
+            if (active) init();
+        });
+    </script>
+</body>
+
+</html>
